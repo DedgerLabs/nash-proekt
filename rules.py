@@ -1,3 +1,4 @@
+from pieces import piece_from_symbol
 from board import SquareBoard
 from move import Move
 
@@ -288,11 +289,35 @@ class ClassicChessRules:
                 else:
                     ok = False
 
+
             elif P == "N":
-                ok = (abs(dr), abs(dc)) in [(1, 2), (2, 1)]
+
+                # Переход на ООП: конь сам знает свои ходы
+
+                obj = piece_from_symbol(piece)  # piece — это символ с доски
+
+                if obj is None:
+
+                    ok = False
+
+                else:
+
+                    ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
+
+
 
             elif P == "B":
-                ok = abs(dr) == abs(dc) and self.path_clear(board, r1, c1, r2, c2)
+
+                obj = piece_from_symbol(piece)
+
+                if obj is None:
+
+                    ok = False
+
+                else:
+
+                    ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
+
 
             elif P == "R":
                 ok = (dr == 0 or dc == 0) and self.path_clear(board, r1, c1, r2, c2)
