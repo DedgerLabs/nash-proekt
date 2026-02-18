@@ -319,19 +319,45 @@ class ClassicChessRules:
                     ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
 
 
+
             elif P == "R":
-                ok = (dr == 0 or dc == 0) and self.path_clear(board, r1, c1, r2, c2)
+
+                obj = piece_from_symbol(piece)
+
+                if obj is None:
+
+                    ok = False
+
+                else:
+
+                    ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
+
 
             elif P == "Q":
-                ok_line = (dr == 0 or dc == 0)
-                ok_diag = (abs(dr) == abs(dc))
-                ok = (ok_line or ok_diag) and self.path_clear(board, r1, c1, r2, c2)
+
+                obj = piece_from_symbol(piece)
+
+                if obj is None:
+
+                    ok = False
+
+                else:
+
+                    ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
+
+
 
             elif P == "K":
-                ok = max(abs(dr), abs(dc)) == 1
 
-            if not ok:
-                return False, "Такой ход для этой фигуры невозможен."
+                obj = piece_from_symbol(piece)
+
+                if obj is None:
+
+                    ok = False
+
+                else:
+
+                    ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
 
         # нельзя оставлять короля под шахом
         tmp_grid = self.simulate_move(board, move, white_turn, move_type)

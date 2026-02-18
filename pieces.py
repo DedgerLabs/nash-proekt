@@ -47,6 +47,52 @@ class Bishop(Piece):
         return _slide_moves(board, r, c, self.is_white, self.DIRECTIONS)
 
 
+class Rook(Piece):
+    DIRECTIONS = (
+        (-1, 0), (+1, 0),
+        (0, -1), (0, +1),
+    )
+
+    def pseudo_moves(self, board, r: int, c: int):
+        return _slide_moves(board, r, c, self.is_white, self.DIRECTIONS)
+
+class Queen(Piece):
+    DIRECTIONS = (
+        # как ладья
+        (-1, 0), (+1, 0), (0, -1), (0, +1),
+        # как слон
+        (-1, -1), (-1, +1), (+1, -1), (+1, +1),
+    )
+
+    def pseudo_moves(self, board, r: int, c: int):
+        return _slide_moves(board, r, c, self.is_white, self.DIRECTIONS)
+
+class King(Piece):
+    OFFSETS = (
+        (-1, -1), (-1, 0), (-1, +1),
+        (0, -1),           (0, +1),
+        (+1, -1), (+1, 0), (+1, +1),
+    )
+
+    def pseudo_moves(self, board, r: int, c: int):
+        moves = []
+        for dr, dc in self.OFFSETS:
+            r2, c2 = r + dr, c + dc
+            if not board.in_bounds(r2, c2):
+                continue
+            target = board.get(r2, c2)
+            if target == ".":
+                moves.append((r2, c2))
+            else:
+                target_white = target.isupper()
+                if target_white != self.is_white:
+                    moves.append((r2, c2))
+        return moves
+
+
+
+
+
 class Knight(Piece):
     OFFSETS = (
         (-2, -1), (-2, +1),
@@ -89,5 +135,17 @@ def piece_from_symbol(symbol: str) -> Piece | None:
     # слон: белый "С", чёрный "с"
     if symbol == "С" or symbol == "с":
         return Bishop(is_white=is_white)
+
+    # ладья: белая "Л", чёрная "л"
+    if symbol == "Л" or symbol == "л":
+        return Rook(is_white=is_white)
+
+    # ферзь: белый "Ф", чёрный "ф"
+    if symbol == "Ф" or symbol == "ф":
+        return Queen(is_white=is_white)
+
+    # король: белый "K", чёрный "к"
+    if symbol == "K" or symbol == "к":
+        return King(is_white=is_white)
 
     return None
