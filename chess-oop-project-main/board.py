@@ -40,4 +40,4 @@ class SquareBoard:
             print("    +---+---+---+---+---+---+---+---+")
         print("      A   B   C   D   E   F   G   H")
         print()
-#qwe4r56y7u8i9o
+#Ден лох
