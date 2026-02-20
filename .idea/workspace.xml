@@ -5,15 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f76e753b-bb7d-4a6d-b8e6-2d903b584d37" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/LICENSE" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chess-oop-project-main/board.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chess-oop-project-main/game.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chess-oop-project-main/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chess-oop-project-main/move.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chess-oop-project-main/pieces.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/chess-oop-project-main/rules.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess-oop-project-main/board.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess-oop-project-main/game.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess-oop-project-main/main.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess-oop-project-main/move.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess-oop-project-main/pieces.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/chess-oop-project-main/rules.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/pieces.py" beforeDir="false" afterPath="$PROJECT_DIR$/pieces.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rules.py" beforeDir="false" afterPath="$PROJECT_DIR$/rules.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,9 +45,15 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "Merging main"
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "C:/Users/Ignat/Documents/универ/тер вер"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Ignat\Documents\универ\тер вер" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="chess_oop" />
