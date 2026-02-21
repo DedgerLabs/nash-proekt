@@ -1,7 +1,7 @@
 from board import SquareBoard
 from rules import ClassicChessRules
 from move import Move
-
+from copy import deepcopy
 
 
 
@@ -14,6 +14,7 @@ class Game:
         self.white_turn = True
         self.move_count = 0
         self.history = []  # для undo
+        self.history = []  # стек прошлых состояний
 
     @staticmethod
     def print_legend():
@@ -141,3 +142,36 @@ class Game:
             self.rules.apply_move(self.board, mv, self.white_turn, info)
             self.move_count += 1
             self.white_turn = not self.white_turn
+
+    def push_state(self):
+        # сохраняем состояние перед ходом
+        snapshot = {
+            "board": deepcopy(self.board.grid) if hasattr(self.board, "grid") else deepcopy(self.board.board),
+            "white_turn": self.white_turn,
+            "halfmove_count": getattr(self, "halfmove_count", 0),
+            "rules_ep": deepcopy(getattr(self.rules, "ep", None)),
+            "rules_moved": deepcopy(getattr(self.rules, "moved", None)),
+        }
+        self.history.append(snapshot)
+
+    def undo(self) -> bool:
+        if not self.history:
+            return False
+        snap = self.history.pop()
+
+        # восстановим доску
+        if hasattr(self.board, "grid"):
+            self.board.grid = snap["board"]
+        else:
+            self.board.board = snap["board"]
+
+        self.white_turn = snap["white_turn"]
+        if hasattr(self, "halfmove_count"):
+            self.halfmove_count = snap["halfmove_count"]
+
+        if hasattr(self.rules, "ep"):
+            self.rules.ep = snap["rules_ep"]
+        if hasattr(self.rules, "moved"):
+            self.rules.moved = snap["rules_moved"]
+
+        return True

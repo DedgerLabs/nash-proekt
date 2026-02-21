@@ -496,3 +496,33 @@ class ClassicChessRules:
 
         if self.is_in_check(board, white_turn):
             print("ВАШ КОРОЛЬ ПОД ШАХОМ!")
+
+    def legal_moves_from(self, board, r: int, c: int, white_turn: bool):
+        """
+        Вернуть список легальных клеток (r2,c2) для фигуры на (r,c),
+        учитывая шах (т.е. после хода король не должен быть под шахом).
+        """
+        piece = board.get(r, c)
+        if piece == ".":
+            return []
+
+        # не та сторона
+        if white_turn and not piece.isupper():
+            return []
+        if (not white_turn) and not piece.islower():
+            return []
+
+        obj = piece_from_symbol(piece)
+        if obj is None:
+            return []
+
+        candidates = obj.pseudo_moves(board, r, c)
+        legal = []
+
+        for (r2, c2) in candidates:
+            mv = Move(r, c, r2, c2)
+            ok, _ = self.validate_move(board, mv, white_turn)
+            if ok:
+                legal.append((r2, c2))
+
+        return legal
