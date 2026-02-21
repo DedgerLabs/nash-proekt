@@ -83,37 +83,20 @@ class ClassicChessRules:
         if p == ".":
             return False
 
-        P = self.piece_type(p)
-        if P is None:
-            return False
-
         dr = r2 - r1
         dc = c2 - c1
 
-        if P == "P":
-            if self.is_white(p):
-                return dr == -1 and abs(dc) == 1
-            else:
-                return dr == 1 and abs(dc) == 1
+        # Пешка: атакует только по диагонали на 1 вперёд
+        if p == "П" or p == "п":
+            is_white = p.isupper()
+            direction = -1 if is_white else 1
+            return (dr == direction) and (abs(dc) == 1)
 
-        if P == "N":
-            return (abs(dr), abs(dc)) in [(1, 2), (2, 1)]
-
-        if P == "B":
-            return abs(dr) == abs(dc) and self.path_clear(board, r1, c1, r2, c2)
-
-        if P == "R":
-            return (dr == 0 or dc == 0) and self.path_clear(board, r1, c1, r2, c2)
-
-        if P == "Q":
-            ok_line = (dr == 0 or dc == 0)
-            ok_diag = (abs(dr) == abs(dc))
-            return (ok_line or ok_diag) and self.path_clear(board, r1, c1, r2, c2)
-
-        if P == "K":
-            return max(abs(dr), abs(dc)) == 1
-
-        return False
+        # Остальные фигуры: через ООП
+        obj = piece_from_symbol(p)
+        if obj is None:
+            return False
+        return (r2, c2) in obj.pseudo_moves(board, r1, c1)
 
     def square_attacked_by(self, board: SquareBoard, attacker_white: bool, tr, tc):
         for r in range(8):
@@ -304,6 +287,17 @@ class ClassicChessRules:
 
                     ok = (r2, c2) in obj.pseudo_moves(board, r1, c1)
 
+            # --- en passant: пешка может идти по диагонали на ПУСТУЮ клетку, если совпало с ep target
+            if (not ok) and self.ep and board.get(r2, c2) == ".":
+                ep_target = self.ep.get("target") or self.ep.get("to")
+                if ep_target == (r2, c2):
+                    # доп. безопасность: ход действительно диагональный на 1 вперёд
+                    direction = -1 if piece.isupper() else 1
+                    if (r2 - r1) == direction and abs(c2 - c1) == 1:
+                        ok = True
+                        return True, "enpassant"
+
+
 
 
             elif P == "B":
@@ -425,6 +419,8 @@ class ClassicChessRules:
             new_ep = {"target": (mid_r, c1), "captured": (r2, c1), "for_white": (not white_turn)}
 
         self.ep = new_ep
+
+
 
     # --- подсказки / мат-пат ---
     def all_legal_moves(self, board: SquareBoard, white_turn: bool):

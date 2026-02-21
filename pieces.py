@@ -90,6 +90,35 @@ class King(Piece):
         return moves
 
 
+class Pawn(Piece):
+    def pseudo_moves(self, board, r: int, c: int):
+        moves = []
+
+        direction = -1 if self.is_white else 1
+        start_row = 6 if self.is_white else 1
+
+        # 1 шаг вперёд
+        r1 = r + direction
+        if board.in_bounds(r1, c) and board.get(r1, c) == ".":
+            moves.append((r1, c))
+
+            # 2 шага вперёд со стартовой
+            r2 = r + 2 * direction
+            if r == start_row and board.in_bounds(r2, c) and board.get(r2, c) == ".":
+                moves.append((r2, c))
+
+        # взятия по диагонали (обычные)
+        for dc in (-1, +1):
+            rr, cc = r + direction, c + dc
+            if not board.in_bounds(rr, cc):
+                continue
+            target = board.get(rr, cc)
+            if target != ".":
+                target_white = target.isupper()
+                if target_white != self.is_white:
+                    moves.append((rr, cc))
+
+        return moves
 
 
 
@@ -147,5 +176,9 @@ def piece_from_symbol(symbol: str) -> Piece | None:
     # король: белый "K", чёрный "к"
     if symbol == "K" or symbol == "к":
         return King(is_white=is_white)
+    # пешка: белая "П", чёрная "п"
+
+    if symbol == "П" or symbol == "п":
+        return Pawn(is_white=is_white)
 
     return None
