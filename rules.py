@@ -526,3 +526,46 @@ class ClassicChessRules:
                 legal.append((r2, c2))
 
         return legal
+
+    def threatened_squares(self, board, attacker_white: bool):
+        """
+        Вернуть множество клеток (r,c), которые атакует сторона attacker_white.
+        attacker_white=True  -> атака белых
+        attacker_white=False -> атака чёрных
+        """
+        attacked = set()
+
+        for r in range(8):
+            for c in range(8):
+                p = board.get(r, c)
+                if p == ".":
+                    continue
+
+                # берём только фигуры атакующей стороны
+                if attacker_white and not p.isupper():
+                    continue
+                if (not attacker_white) and not p.islower():
+                    continue
+
+                P = self.piece_type(p)  # твой метод, который возвращает "P","N","B","R","Q","K"
+                if P is None:
+                    continue
+
+                # пешка атакует диагонали (не как ходит)
+                if P == "P":
+                    direction = -1 if p.isupper() else 1
+                    for dc in (-1, +1):
+                        rr, cc = r + direction, c + dc
+                        if board.in_bounds(rr, cc):
+                            attacked.add((rr, cc))
+                    continue
+
+                # для остальных можно использовать can_attack
+                for rr in range(8):
+                    for cc in range(8):
+                        if self.can_attack(board, r, c, rr, cc):
+                            attacked.add((rr, cc))
+
+        return attacked
+
+

@@ -30,10 +30,12 @@ def pixel_to_cell(x: int, y: int):
     return None
 
 
-def draw(screen, font, small, board: SquareBoard, white_turn: bool, halfmove_count: int,
-         selected=None, info_text: str = "", legal_moves=None):
+def draw(screen, font, small, board, white_turn, halfmove_count,
+         selected=None, info_text="", legal_moves=None, threatened=None):
     if legal_moves is None:
         legal_moves = []
+    if threatened is None:
+        threatened = set()
 
     screen.fill((20, 20, 20))
 
@@ -55,6 +57,11 @@ def draw(screen, font, small, board: SquareBoard, white_turn: bool, halfmove_cou
         r, c = selected
         x, y = cell_to_pixel(r, c)
         pygame.draw.rect(screen, (220, 180, 60), (x + 2, y + 2, CELL - 4, CELL - 4), 4)
+
+    # клетки под боем
+    for (r, c) in threatened:
+        x, y = cell_to_pixel(r, c)
+        pygame.draw.rect(screen, (180, 80, 80), (x + 6, y + 6, CELL - 12, CELL - 12), 2)
 
     # фигуры (буквы)
     for r in range(8):
@@ -103,33 +110,54 @@ def main():
     selected = None
     info_text = ""
     legal_moves = []
+    show_hint = True
+    show_threatened = False
+    threatened = set()
 
     while running:
         clock.tick(60)
 
-        # рисуем кадр
-        draw(
-            screen, font, small,
-            board=board,
-            white_turn=game.white_turn,
-            halfmove_count=getattr(game, "halfmove_count", 0),
-            selected=selected,
-            info_text=info_text,
-            legal_moves=legal_moves
-        )
-        pygame.display.flip()
-
+        # 🔹 1. ОБРАБОТКА СОБЫТИЙ
         for event in pygame.event.get():
+
             if event.type == pygame.QUIT:
                 running = False
-                break
 
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            elif event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+
+                elif event.key == pygame.K_u:
+                    ok = game.undo()
+                    info_text = "Undo: ход отменён" if ok else "Undo: нечего отменять"
+                    selected = None
+                    legal_moves = []
+                    threatened = set()
+
+                elif event.key == pygame.K_h:
+                    show_hint = not show_hint
+                    info_text = "Hint: ON" if show_hint else "Hint: OFF"
+                    legal_moves = []
+
+                elif event.key == pygame.K_t:
+                    show_threatened = not show_threatened
+                    if show_threatened:
+                        attacker_white = not game.white_turn
+                        threatened = game.rules.threatened_squares(board, attacker_white)
+                        info_text = "Threatened: ON"
+                    else:
+                        threatened = set()
+                        info_text = "Threatened: OFF"
+
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # твоя логика клика мыши
                 pos = pixel_to_cell(*event.pos)
                 if pos is None:
                     continue
 
                 r, c = pos
+                # ... дальше твой код выбора/хода ...
 
                 # 1-й клик — выбрать фигуру
                 if selected is None:
@@ -149,11 +177,11 @@ def main():
                     selected = (r, c)
                     info_text = ""
 
-                    # подсветка легальных ходов (если такой метод есть)
-                    if hasattr(game.rules, "legal_moves_from"):
+                    # подсказка ходов
+                    legal_moves = []
+                    if show_hint and hasattr(game.rules, "legal_moves_from"):
                         legal_moves = game.rules.legal_moves_from(board, r, c, game.white_turn)
-                    else:
-                        legal_moves = []
+
                     continue
 
                 # 2-й клик — сделать ход
@@ -161,34 +189,47 @@ def main():
                     r1, c1 = selected
                     r2, c2 = r, c
 
-                    # клик по той же клетке — снять выделение
-                    if (r2, c2) == (r1, c1):
-                        selected = None
-                        legal_moves = []
-                        info_text = ""
-                        continue
-
                     move = Move(r1, c1, r2, c2)
-
                     ok, result = game.rules.validate_move(board, move, game.white_turn)
+
                     if not ok:
-                        info_text = str(result)
+                        info_text = f"Ошибка: {result}"
                         selected = None
                         legal_moves = []
                         continue
+
+                    # сохраняем состояние для undo
+                    game.push_state()
 
                     # применяем ход
                     game.rules.apply_move(board, move, game.white_turn, result)
 
+                    # переключаем ход и счётчик
                     game.white_turn = not game.white_turn
-                    if hasattr(game, "halfmove_count"):
-                        game.halfmove_count += 1
+                    game.move_count += 1
+
+                    # обновить threatened если включён
+                    if show_threatened:
+                        attacker_white = not game.white_turn
+                        threatened = game.rules.threatened_squares(board, attacker_white)
 
                     selected = None
                     legal_moves = []
                     info_text = ""
 
-    pygame.quit()
+        # 🔹 2. РИСУЕМ КАДР
+        draw(
+            screen, font, small,
+            board=board,
+            white_turn=game.white_turn,
+            halfmove_count=game.move_count,
+            selected=selected,
+            info_text=info_text,
+            legal_moves=legal_moves,
+            threatened=threatened
+        )
+
+        pygame.display.flip()
 
 
 if __name__ == "__main__":
