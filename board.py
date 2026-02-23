@@ -1,6 +1,6 @@
 class SquareBoard:
-    def __init__(self):
-        self.grid = self.make_start_board()
+    def __init__(self, grid=None):
+        self.grid = grid if grid is not None else self.make_start_board()
 
     @staticmethod
     def make_start_board():
@@ -41,3 +41,18 @@ class SquareBoard:
         print("      A   B   C   D   E   F   G   H")
         print()
 # Игнат, отпиши, как закончишь на ООП переводить.(Ден)
+
+def make_start_checkers_board():
+    grid = [["." for _ in range(8)] for _ in range(8)]
+
+    for r in range(3):  # чёрные сверху
+        for c in range(8):
+            if (r + c) % 2 == 1:
+                grid[r][c] = "x"
+
+    for r in range(5, 8):  # белые снизу
+        for c in range(8):
+            if (r + c) % 2 == 1:
+                grid[r][c] = "o"
+
+    return grid

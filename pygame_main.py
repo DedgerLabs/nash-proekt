@@ -1,5 +1,5 @@
 import pygame
-
+from board import SquareBoard, make_start_checkers_board
 from board import SquareBoard
 from game import Game
 from move import Move
@@ -96,6 +96,7 @@ def draw(screen, font, small, board, white_turn, halfmove_count,
 
 
 def main():
+    mode = input("1 - chess, 2 - checkers, 3 - hex: ").strip()
     pygame.init()
     screen = pygame.display.set_mode((W, H))
     pygame.display.set_caption("Chess pygame UI (step 2)")
@@ -103,8 +104,16 @@ def main():
     font = pygame.font.SysFont(None, 36)
     small = pygame.font.SysFont(None, 24)
 
-    game = Game()
+
+
+    if mode == "2":
+        from checkers_rules import CheckersRules
+        from board import SquareBoard, make_start_checkers_board
+        game = Game(board=SquareBoard(grid=make_start_checkers_board()), rules=CheckersRules())
+    else:
+        game = Game()
     board = game.board
+
 
     running = True
     selected = None
@@ -167,22 +176,34 @@ def main():
                         continue
 
                     # проверка цвета
-                    if game.white_turn and not sym.isupper():
-                        info_text = "Сейчас ход белых"
+                    if selected is None:
+                        sym = board.get(r, c)
+                        if sym == ".":
+                            info_text = "Пустая клетка"
+                            continue
+
+                        # универсальная проверка "своя фигура?"
+                        if hasattr(game.rules, "is_own_piece"):
+                            if not game.rules.is_own_piece(sym, game.white_turn):
+                                info_text = "Выбрана чужая фигура"
+                                continue
+                        else:
+                            # fallback для шахмат (если не добавлял is_own_piece в chess rules)
+                            if game.white_turn and not sym.isupper():
+                                info_text = "Сейчас ход белых"
+                                continue
+                            if (not game.white_turn) and not sym.islower():
+                                info_text = "Сейчас ход чёрных"
+                                continue
+
+                        selected = (r, c)
+                        info_text = ""
+
+                        legal_moves = []
+                        if show_hint and hasattr(game.rules, "legal_moves_from"):
+                            legal_moves = game.rules.legal_moves_from(board, r, c, game.white_turn)
+
                         continue
-                    if (not game.white_turn) and not sym.islower():
-                        info_text = "Сейчас ход чёрных"
-                        continue
-
-                    selected = (r, c)
-                    info_text = ""
-
-                    # подсказка ходов
-                    legal_moves = []
-                    if show_hint and hasattr(game.rules, "legal_moves_from"):
-                        legal_moves = game.rules.legal_moves_from(board, r, c, game.white_turn)
-
-                    continue
 
                 # 2-й клик — сделать ход
                 else:

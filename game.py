@@ -8,13 +8,12 @@ from copy import deepcopy
 
 
 class Game:
-    def __init__(self):
-        self.board = SquareBoard()
-        self.rules = ClassicChessRules()
+    def __init__(self, board=None, rules=None):
+        self.board = board if board is not None else SquareBoard()   # chess default
+        self.rules = rules if rules is not None else ClassicChessRules()
         self.white_turn = True
         self.move_count = 0
-        self.history = []  # для undo
-        self.history = []  # стек прошлых состояний
+        self.history = []
 
     @staticmethod
     def print_legend():
