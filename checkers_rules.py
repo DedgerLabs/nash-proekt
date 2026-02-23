@@ -135,3 +135,80 @@ class CheckersRules:
             return sym in ("o", "O")
         else:
             return sym in ("x", "X")
+
+    def threatened_squares(self, board, defender_white: bool):
+        """
+        Клетки с фигурами стороны defender_white, которые противник может взять СЕЙЧАС.
+        Возвращаем set[(r,c)] именно клеток с фигурами (жертвы).
+        """
+        victims = set()
+
+        attacker_white = not defender_white
+
+        for r in range(8):
+            for c in range(8):
+                p = board.get(r, c)
+                if p == ".":
+                    continue
+
+                # берём только атакующую сторону
+                if attacker_white and p not in ("o", "O"):
+                    continue
+                if (not attacker_white) and p not in ("x", "X"):
+                    continue
+
+                # проверяем возможные взятия (прыжок 2 клетки)
+                for dr, dc in [(-1, -1), (-1, +1), (+1, -1), (+1, +1)]:
+                    mid_r, mid_c = r + dr, c + dc
+                    r2, c2 = r + 2 * dr, c + 2 * dc
+
+                    if not board.in_bounds(r2, c2):
+                        continue
+
+                    if board.get(r2, c2) != ".":
+                        continue  # приземляться можно только на пустую
+
+                    mid = board.get(mid_r, mid_c)
+                    if mid == ".":
+                        continue  # перепрыгивать не через кого
+
+                    # mid — это фигура defender?
+                    if defender_white and mid in ("o", "O"):
+                        victims.add((mid_r, mid_c))
+                    if (not defender_white) and mid in ("x", "X"):
+                        victims.add((mid_r, mid_c))
+
+        return victims
+
+    def has_pieces(self, board, white: bool) -> bool:
+        targets = ("o", "O") if white else ("x", "X")
+        for r in range(8):
+            for c in range(8):
+                if board.get(r, c) in targets:
+                    return True
+        return False
+
+    def has_any_legal_move(self, board, white_turn: bool) -> bool:
+        own = ("o", "O") if white_turn else ("x", "X")
+        for r in range(8):
+            for c in range(8):
+                if board.get(r, c) in own:
+                    moves = self.legal_moves_from(board, r, c, white_turn)
+                    if moves:
+                        return True
+        return False
+
+    def game_result(self, board, white_turn: bool):
+        """
+        Возвращает:
+          None — игра продолжается
+          "white" — выиграли белые
+          "black" — выиграли чёрные
+        """
+        if not self.has_pieces(board, white_turn):
+            return "black" if white_turn else "white"
+
+        if not self.has_any_legal_move(board, white_turn):
+            return "black" if white_turn else "white"
+
+        return None

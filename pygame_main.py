@@ -149,14 +149,32 @@ def main():
                     info_text = "Hint: ON" if show_hint else "Hint: OFF"
                     legal_moves = []
 
+
+
                 elif event.key == pygame.K_t:
+
                     show_threatened = not show_threatened
+
                     if show_threatened:
-                        attacker_white = not game.white_turn
-                        threatened = game.rules.threatened_squares(board, attacker_white)
-                        info_text = "Threatened: ON"
+
+                        if hasattr(game.rules, "threatened_squares"):
+
+                            threatened = game.rules.threatened_squares(board, game.white_turn)
+
+                            info_text = "Threatened: ON"
+
+                        else:
+
+                            threatened = set()
+
+                            info_text = "Threatened: нет метода"
+
+                            show_threatened = False
+
                     else:
+
                         threatened = set()
+
                         info_text = "Threatened: OFF"
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -228,6 +246,17 @@ def main():
                     # переключаем ход и счётчик
                     game.white_turn = not game.white_turn
                     game.move_count += 1
+
+                    res = None
+                    if hasattr(game.rules, "game_result"):
+                        res = game.rules.game_result(board, game.white_turn)
+
+                    if res == "white":
+                        info_text = "Игра окончена: победили БЕЛЫЕ!"
+                        running = False  # или поставь game_over=True
+                    elif res == "black":
+                        info_text = "Игра окончена: победили ЧЁРНЫЕ!"
+                        running = False
 
                     # обновить threatened если включён
                     if show_threatened:

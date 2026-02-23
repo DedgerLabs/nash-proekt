@@ -527,13 +527,12 @@ class ClassicChessRules:
 
         return legal
 
-    def threatened_squares(self, board, attacker_white: bool):
+    def threatened_squares(self, board, defender_white: bool):
         """
-        Вернуть множество клеток (r,c), которые атакует сторона attacker_white.
-        attacker_white=True  -> атака белых
-        attacker_white=False -> атака чёрных
+        Клетки с фигурами стороны defender_white, которые атакуются противником.
         """
-        attacked = set()
+        victims = set()
+        attacker_white = not defender_white
 
         for r in range(8):
             for c in range(8):
@@ -541,31 +540,14 @@ class ClassicChessRules:
                 if p == ".":
                     continue
 
-                # берём только фигуры атакующей стороны
-                if attacker_white and not p.isupper():
+                if defender_white and not p.isupper():
                     continue
-                if (not attacker_white) and not p.islower():
-                    continue
-
-                P = self.piece_type(p)  # твой метод, который возвращает "P","N","B","R","Q","K"
-                if P is None:
+                if (not defender_white) and not p.islower():
                     continue
 
-                # пешка атакует диагонали (не как ходит)
-                if P == "P":
-                    direction = -1 if p.isupper() else 1
-                    for dc in (-1, +1):
-                        rr, cc = r + direction, c + dc
-                        if board.in_bounds(rr, cc):
-                            attacked.add((rr, cc))
-                    continue
+                # клетка фигуры атакуется противником?
+                if self.square_attacked_by(board, attacker_white, r, c):
+                    victims.add((r, c))
 
-                # для остальных можно использовать can_attack
-                for rr in range(8):
-                    for cc in range(8):
-                        if self.can_attack(board, r, c, rr, cc):
-                            attacked.add((rr, cc))
-
-        return attacked
-
+        return victims
 
