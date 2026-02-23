@@ -97,22 +97,40 @@ def draw(screen, font, small, board, white_turn, halfmove_count,
 
 def main():
     mode = input("1 - chess, 2 - checkers, 3 - hex: ").strip()
+
+    if mode == "1":
+        game = Game()  # шахматы
+
+    elif mode == "2":
+        from checkers_rules import CheckersRules
+        from board import SquareBoard, make_start_checkers_board
+
+        game = Game(
+            board=SquareBoard(grid=make_start_checkers_board()),
+            rules=CheckersRules()
+        )
+
+
+    elif mode == "3":
+
+        import pygame_hex_ui
+
+        pygame_hex_ui.main()
+
+        return
+
+    else:
+        print("Неверный ввод")
+        return
+    board = game.board
+
     pygame.init()
     screen = pygame.display.set_mode((W, H))
-    pygame.display.set_caption("Chess pygame UI (step 2)")
+    pygame.display.set_caption("Chess pygame UI")
+
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
     small = pygame.font.SysFont(None, 24)
-
-
-
-    if mode == "2":
-        from checkers_rules import CheckersRules
-        from board import SquareBoard, make_start_checkers_board
-        game = Game(board=SquareBoard(grid=make_start_checkers_board()), rules=CheckersRules())
-    else:
-        game = Game()
-    board = game.board
 
 
     running = True

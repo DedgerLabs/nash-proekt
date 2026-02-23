@@ -78,6 +78,7 @@ class HexBoard:
 def main():
     pygame.init()
 
+
     # Настройки
     radius = 5          # Глинский = 5 (91 клетка)
     HEX_SIZE = 34       # размер клетки (подбери под своё окно)
@@ -89,6 +90,8 @@ def main():
     font = pygame.font.SysFont(None, 24)
 
     board = HexBoard(radius=radius)
+    from hex_board import make_start_hex_test
+    make_start_hex_test(board)
 
     # Центрируем поле
     origin = (W // 2, H // 2)
