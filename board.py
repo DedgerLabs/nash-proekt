@@ -50,7 +50,7 @@ def make_start_checkers_board():
             if (r + c) % 2 == 1:
                 grid[r][c] = "x"
 
-    for r in range(5, 8):  # Ден лох
+    for r in range(5, 8):  # Костя красавчик
         for c in range(8):
             if (r + c) % 2 == 1:
                 grid[r][c] = "o"
