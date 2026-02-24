@@ -1,6 +1,6 @@
 import pygame
-
 from board import SquareBoard, make_start_checkers_board
+from board import SquareBoard
 from game import Game
 from move import Move
 
@@ -99,25 +99,37 @@ def main():
     mode = input("1 - chess, 2 - checkers, 3 - hex: ").strip()
 
     if mode == "1":
-        game = Game()  # шахматы
+        import pygame
+        import friend_chess
 
+        pygame.init()
+        screen = pygame.display.set_mode((friend_chess.WIDTH + 300, friend_chess.HEIGHT))
+        pygame.display.set_caption("Шахматы (вариант друга)")
+
+        game = friend_chess.ChessGame(screen)
+        game.run()
+        return
     elif mode == "2":
         from checkers_rules import CheckersRules
+        from board import SquareBoard, make_start_checkers_board
 
         game = Game(
             board=SquareBoard(grid=make_start_checkers_board()),
             rules=CheckersRules()
         )
 
+
     elif mode == "3":
+
         import pygame_hex_ui
+
         pygame_hex_ui.main()
+
         return
 
     else:
         print("Неверный ввод")
         return
-
     board = game.board
 
     pygame.init()
@@ -127,6 +139,7 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 36)
     small = pygame.font.SysFont(None, 24)
+
 
     running = True
     selected = None
@@ -139,7 +152,7 @@ def main():
     while running:
         clock.tick(60)
 
-        # 1) события
+        # 🔹 1. ОБРАБОТКА СОБЫТИЙ
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
@@ -162,27 +175,42 @@ def main():
                     info_text = "Hint: ON" if show_hint else "Hint: OFF"
                     legal_moves = []
 
+
+
                 elif event.key == pygame.K_t:
+
                     show_threatened = not show_threatened
 
                     if show_threatened:
+
                         if hasattr(game.rules, "threatened_squares"):
+
                             threatened = game.rules.threatened_squares(board, game.white_turn)
+
                             info_text = "Threatened: ON"
+
                         else:
+
                             threatened = set()
+
                             info_text = "Threatened: нет метода"
+
                             show_threatened = False
+
                     else:
+
                         threatened = set()
+
                         info_text = "Threatened: OFF"
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # твоя логика клика мыши
                 pos = pixel_to_cell(*event.pos)
                 if pos is None:
                     continue
 
                 r, c = pos
+                # ... дальше твой код выбора/хода ...
 
                 # 1-й клик — выбрать фигуру
                 if selected is None:
@@ -191,28 +219,35 @@ def main():
                         info_text = "Пустая клетка"
                         continue
 
-                    # универсальная проверка "своя фигура?"
-                    if hasattr(game.rules, "is_own_piece"):
-                        if not game.rules.is_own_piece(sym, game.white_turn):
-                            info_text = "Выбрана чужая фигура"
-                            continue
-                    else:
-                        # fallback
-                        if game.white_turn and not sym.isupper():
-                            info_text = "Сейчас ход белых"
-                            continue
-                        if (not game.white_turn) and not sym.islower():
-                            info_text = "Сейчас ход чёрных"
+                    # проверка цвета
+                    if selected is None:
+                        sym = board.get(r, c)
+                        if sym == ".":
+                            info_text = "Пустая клетка"
                             continue
 
-                    selected = (r, c)
-                    info_text = ""
+                        # универсальная проверка "своя фигура?"
+                        if hasattr(game.rules, "is_own_piece"):
+                            if not game.rules.is_own_piece(sym, game.white_turn):
+                                info_text = "Выбрана чужая фигура"
+                                continue
+                        else:
+                            # fallback для шахмат (если не добавлял is_own_piece в chess rules)
+                            if game.white_turn and not sym.isupper():
+                                info_text = "Сейчас ход белых"
+                                continue
+                            if (not game.white_turn) and not sym.islower():
+                                info_text = "Сейчас ход чёрных"
+                                continue
 
-                    legal_moves = []
-                    if show_hint and hasattr(game.rules, "legal_moves_from"):
-                        legal_moves = game.rules.legal_moves_from(board, r, c, game.white_turn)
+                        selected = (r, c)
+                        info_text = ""
 
-                    continue
+                        legal_moves = []
+                        if show_hint and hasattr(game.rules, "legal_moves_from"):
+                            legal_moves = game.rules.legal_moves_from(board, r, c, game.white_turn)
+
+                        continue
 
                 # 2-й клик — сделать ход
                 else:
@@ -228,7 +263,7 @@ def main():
                         legal_moves = []
                         continue
 
-                    # сохраняем состояние для undo (ПЕРЕД ходом)
+                    # сохраняем состояние для undo
                     game.push_state()
 
                     # применяем ход
@@ -244,20 +279,21 @@ def main():
 
                     if res == "white":
                         info_text = "Игра окончена: победили БЕЛЫЕ!"
-                        running = False
+                        running = False  # или поставь game_over=True
                     elif res == "black":
                         info_text = "Игра окончена: победили ЧЁРНЫЕ!"
                         running = False
 
                     # обновить threatened если включён
-                    if show_threatened and hasattr(game.rules, "threatened_squares"):
-                        threatened = game.rules.threatened_squares(board, game.white_turn)
+                    if show_threatened:
+                        attacker_white = not game.white_turn
+                        threatened = game.rules.threatened_squares(board, attacker_white)
 
                     selected = None
                     legal_moves = []
                     info_text = ""
 
-        # 2) рисуем
+        # 🔹 2. РИСУЕМ КАДР
         draw(
             screen, font, small,
             board=board,
@@ -270,8 +306,6 @@ def main():
         )
 
         pygame.display.flip()
-
-    pygame.quit()
 
 
 if __name__ == "__main__":
