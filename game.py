@@ -170,4 +170,8 @@ class Game:
             self.push_state()
             self.rules.apply_move(self.board, mv, self.white_turn, info)
             self.move_count += 1
-            self.white_turn = not self.white_turn
+
+            if hasattr(self.rules, "forced_piece") and self.rules.forced_piece is not None:
+                print("Продолжай рубку этой же шашкой!")
+            else:
+                self.white_turn = not self.white_turn
