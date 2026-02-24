@@ -1,24 +1,21 @@
 import math
 import pygame
 
+from hex_board import HexBoard, make_start_hex_test
+
 # ---------------------------
 # Hex math (axial coordinates)
 # ---------------------------
 
 SQRT3 = math.sqrt(3)
 
-def axial_neighbors(q, r):
-    return [
-        (q + 1, r), (q - 1, r),
-        (q, r + 1), (q, r - 1),
-        (q + 1, r - 1), (q - 1, r + 1),
-    ]
 
 def axial_to_pixel(q, r, size, origin):
     ox, oy = origin
     x = size * SQRT3 * (q + r / 2) + ox
     y = size * 1.5 * r + oy
     return (x, y)
+
 
 def hex_corners(cx, cy, size):
     # pointy-top
@@ -27,6 +24,7 @@ def hex_corners(cx, cy, size):
         angle = math.radians(60 * i - 30)
         pts.append((cx + size * math.cos(angle), cy + size * math.sin(angle)))
     return pts
+
 
 def point_in_poly(pt, poly):
     # ray casting
@@ -40,36 +38,6 @@ def point_in_poly(pt, poly):
             inside = not inside
     return inside
 
-# ---------------------------
-# Hex board model (radius)
-# ---------------------------
-
-class HexBoard:
-    """
-    Гекс-доска радиуса R (Глинский: обычно R=5 -> 91 клетка).
-    Храним клетки в axial (q,r). Допустимые клетки: |q|<=R, |r|<=R, |q+r|<=R.
-    """
-    def __init__(self, radius=5):
-        self.radius = radius
-        self.cells = {}  # (q,r) -> symbol
-        for q in range(-radius, radius + 1):
-            for r in range(-radius, radius + 1):
-                s = -q - r
-                if max(abs(q), abs(r), abs(s)) <= radius:
-                    self.cells[(q, r)] = "."  # пусто
-
-    def get(self, q, r):
-        return self.cells.get((q, r))
-
-    def set(self, q, r, v):
-        if (q, r) in self.cells:
-            self.cells[(q, r)] = v
-
-    def in_bounds(self, q, r):
-        return (q, r) in self.cells
-
-    def all_cells(self):
-        return list(self.cells.keys())
 
 # ---------------------------
 # Pygame UI
@@ -78,19 +46,17 @@ class HexBoard:
 def main():
     pygame.init()
 
-
     # Настройки
     radius = 5          # Глинский = 5 (91 клетка)
-    HEX_SIZE = 34       # размер клетки (подбери под своё окно)
+    HEX_SIZE = 34       # размер клетки
     W, H = 900, 800
 
     screen = pygame.display.set_mode((W, H))
-    pygame.display.set_caption("Hex Chess board (preview)")
+    pygame.display.set_caption("Hex board (preview)")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 24)
 
     board = HexBoard(radius=radius)
-    from hex_board import make_start_hex_test
     make_start_hex_test(board)
 
     # Центрируем поле
@@ -100,7 +66,6 @@ def main():
     info = "Кликни по клетке"
 
     # Предрасчёт полигонов для клика
-    # (q,r) -> poly points
     polys = {}
     for (q, r) in board.all_cells():
         cx, cy = axial_to_pixel(q, r, HEX_SIZE, origin)
@@ -139,7 +104,7 @@ def main():
             pygame.draw.polygon(screen, color, poly)
             pygame.draw.polygon(screen, (40, 40, 40), poly, 2)
 
-            # символ (пока пусто)
+            # символ
             sym = board.get(q, r)
             if sym != ".":
                 cx, cy = axial_to_pixel(q, r, HEX_SIZE, origin)
@@ -157,6 +122,7 @@ def main():
         pygame.display.flip()
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
