@@ -99,7 +99,6 @@ def main():
     mode = input("1 - chess, 2 - checkers, 3 - hex: ").strip()
 
     if mode == "1":
-        import pygame
         import friend_chess
 
         pygame.init()

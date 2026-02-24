@@ -5,6 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f76e753b-bb7d-4a6d-b8e6-2d903b584d37" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/friend_chess.py" beforeDir="false" afterPath="$PROJECT_DIR$/friend_chess.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hex_rules.py" beforeDir="false" afterPath="$PROJECT_DIR$/hex_rules.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pygame_hex_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/pygame_hex_ui.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pygame_main.py" beforeDir="false" afterPath="$PROJECT_DIR$/pygame_main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

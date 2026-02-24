@@ -256,6 +256,121 @@ class King(Piece):
         return moves
 
 
+# ==================== ДОПОЛНИТЕЛЬНЫЕ ФИГУРЫ (модификация) ====================
+class Archbishop(Piece):
+    """
+    Архиепископ: ходит как СЛОН + КОНЬ (объединение ходов).
+    """
+
+    def get_symbol(self):
+        return 'A' if self.color == WHITE_PIECE else 'a'
+
+    def get_possible_moves(self, board):
+        moves = set()
+
+        # как слон
+        row, col = self.pos
+        directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+        for dr, dc in directions:
+            for step in range(1, 8):
+                new_row, new_col = row + step * dr, col + step * dc
+                if not (0 <= new_row < 8 and 0 <= new_col < 8):
+                    break
+                target = board.get_piece_at((new_row, new_col))
+                if target is None:
+                    moves.add((new_row, new_col))
+                elif target.color != self.color:
+                    moves.add((new_row, new_col))
+                    break
+                else:
+                    break
+
+        # как конь
+        knight_moves = [
+            (-2, -1), (-2, 1), (-1, -2), (-1, 2),
+            (1, -2), (1, 2), (2, -1), (2, 1)
+        ]
+        for dr, dc in knight_moves:
+            new_row, new_col = row + dr, col + dc
+            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                target = board.get_piece_at((new_row, new_col))
+                if target is None or target.color != self.color:
+                    moves.add((new_row, new_col))
+
+        return list(moves)
+
+
+class Chancellor(Piece):
+    """
+    Канцлер: ходит как ЛАДЬЯ + КОНЬ (объединение ходов).
+    """
+
+    def get_symbol(self):
+        return 'C' if self.color == WHITE_PIECE else 'c'
+
+    def get_possible_moves(self, board):
+        moves = set()
+        row, col = self.pos
+
+        # как ладья
+        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+        for dr, dc in directions:
+            for step in range(1, 8):
+                new_row, new_col = row + step * dr, col + step * dc
+                if not (0 <= new_row < 8 and 0 <= new_col < 8):
+                    break
+                target = board.get_piece_at((new_row, new_col))
+                if target is None:
+                    moves.add((new_row, new_col))
+                elif target.color != self.color:
+                    moves.add((new_row, new_col))
+                    break
+                else:
+                    break
+
+        # как конь
+        knight_moves = [
+            (-2, -1), (-2, 1), (-1, -2), (-1, 2),
+            (1, -2), (1, 2), (2, -1), (2, 1)
+        ]
+        for dr, dc in knight_moves:
+            new_row, new_col = row + dr, col + dc
+            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                target = board.get_piece_at((new_row, new_col))
+                if target is None or target.color != self.color:
+                    moves.add((new_row, new_col))
+
+        return list(moves)
+
+
+class Camel(Piece):
+    """
+    Верблюд: "длинный конь" (3+1).
+    Ходы: (±3,±1) и (±1,±3)
+    """
+
+    def get_symbol(self):
+        return 'M' if self.color == WHITE_PIECE else 'm'
+
+    def get_possible_moves(self, board):
+        moves = []
+        row, col = self.pos
+
+        camel_moves = [
+            (-3, -1), (-3, 1), (3, -1), (3, 1),
+            (-1, -3), (-1, 3), (1, -3), (1, 3),
+        ]
+
+        for dr, dc in camel_moves:
+            new_row, new_col = row + dr, col + dc
+            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                target = board.get_piece_at((new_row, new_col))
+                if target is None or target.color != self.color:
+                    moves.append((new_row, new_col))
+
+        return moves
+
+
 # ==================== КЛАСС ХОДА ====================
 
 class Move:
@@ -317,15 +432,15 @@ class Board:
         self.grid[7][7] = Rook(WHITE_PIECE, (7, 7))
 
         # Кони
-        self.grid[0][1] = Knight(BLACK_PIECE, (0, 1))
-        self.grid[0][6] = Knight(BLACK_PIECE, (0, 6))
-        self.grid[7][1] = Knight(WHITE_PIECE, (7, 1))
-        self.grid[7][6] = Knight(WHITE_PIECE, (7, 6))
+        self.grid[0][1] = Chancellor(BLACK_PIECE, (0, 1))
+        self.grid[0][6] = Archbishop(BLACK_PIECE, (0, 6))
+        self.grid[7][1] = Chancellor(WHITE_PIECE, (7, 1))
+        self.grid[7][6] = Archbishop(WHITE_PIECE, (7, 6))
 
         # Слоны
-        self.grid[0][2] = Bishop(BLACK_PIECE, (0, 2))
+        self.grid[0][2] = Camel(BLACK_PIECE, (0, 2))
         self.grid[0][5] = Bishop(BLACK_PIECE, (0, 5))
-        self.grid[7][2] = Bishop(WHITE_PIECE, (7, 2))
+        self.grid[7][2] = Camel(WHITE_PIECE, (7, 2))
         self.grid[7][5] = Bishop(WHITE_PIECE, (7, 5))
 
         # Ферзи
@@ -990,8 +1105,13 @@ class ChessGame:
         pygame.quit()
 
 
-if __name__ == "__main__":
+def main():
+    # Запуск pygame-версии шахмат (вариант друга)
     screen = pygame.display.set_mode((WIDTH + 300, HEIGHT))
     pygame.display.set_caption("Шахматы")
     game = ChessGame(screen)
     game.run()
+
+
+if __name__ == "__main__":
+    main()
