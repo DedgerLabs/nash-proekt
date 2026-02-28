@@ -96,6 +96,7 @@ def draw(screen, font, small, board, white_turn, halfmove_count,
 
 
 def main():
+    game_over = False
     mode = input("1 - chess, 2 - checkers, 3 - hex: ").strip()
 
     if mode == "1":
@@ -156,6 +157,10 @@ def main():
 
             if event.type == pygame.QUIT:
                 running = False
+
+            if game_over:
+                continue
+
 
             elif event.type == pygame.KEYDOWN:
 
@@ -268,29 +273,30 @@ def main():
                     # применяем ход
                     game.rules.apply_move(board, move, game.white_turn, result)
 
-                    # переключаем ход и счётчик
-                    game.white_turn = not game.white_turn
+                    # счётчик полуходов можно увеличивать всегда
                     game.move_count += 1
 
-                    res = None
-                    if hasattr(game.rules, "game_result"):
-                        res = game.rules.game_result(board, game.white_turn)
+                    # ✅ если это шашки и forced_piece != None — серия продолжается, ход НЕ меняем
+                    if hasattr(game.rules, "forced_piece") and game.rules.forced_piece is not None:
+                        selected = game.rules.forced_piece  # продолжаем той же шашкой
+                        r_sel, c_sel = selected
+                        legal_moves = game.rules.legal_moves_from(board, r_sel, c_sel, game.white_turn)
+                        info_text = "Продолжай рубку этой же шашкой!"
+                    else:
+                        # серия закончилась (или это не шашки) — ход переходит
+                        game.white_turn = not game.white_turn
+                        selected = None
+                        legal_moves = []
+                        info_text = ""
 
-                    if res == "white":
-                        info_text = "Игра окончена: победили БЕЛЫЕ!"
-                        running = False  # или поставь game_over=True
-                    elif res == "black":
-                        info_text = "Игра окончена: победили ЧЁРНЫЕ!"
-                        running = False
+                    result = game.rules.game_result(board, game.white_turn)
 
-                    # обновить threatened если включён
-                    if show_threatened:
-                        attacker_white = not game.white_turn
-                        threatened = game.rules.threatened_squares(board, attacker_white)
-
-                    selected = None
-                    legal_moves = []
-                    info_text = ""
+                    if result == "white":
+                        info_text = "Победа белых!"
+                        game_over = True
+                    elif result == "black":
+                        info_text = "Победа чёрных!"
+                        game_over = True
 
         # 🔹 2. РИСУЕМ КАДР
         draw(

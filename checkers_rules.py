@@ -175,12 +175,11 @@ class CheckersRules:
             board.set(mid_r, mid_c, ".")
 
         # превращение в дамку
-        if p == "o" and r2 == 0:
+        if p == "o" and r2 == 7:
             board.set(r2, c2, "O")
-            p = "O"
-        if p == "x" and r2 == 7:
+
+        if p == "x" and r2 == 0:
             board.set(r2, c2, "X")
-            p = "X"
 
         # ЛОГИКА СЕРИИ ВЗЯТИЙ:
         if move_type == "capture":

@@ -171,7 +171,7 @@ class Game:
             self.rules.apply_move(self.board, mv, self.white_turn, info)
             self.move_count += 1
 
-            if hasattr(self.rules, "forced_piece") and self.rules.forced_piece is not None:
-                print("Продолжай рубку этой же шашкой!")
-            else:
+            if not hasattr(self.rules, "forced_piece") or self.rules.forced_piece is None:
                 self.white_turn = not self.white_turn
+            else:
+                print("Продолжай рубку этой же шашкой!")
