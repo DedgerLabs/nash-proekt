@@ -99,8 +99,15 @@ def main():
     mode = input("1 - chess, 2 - checkers, 3 - hex: ").strip()
 
     if mode == "1":
-        game = Game()  # шахматы
+        import friend_chess
 
+        pygame.init()
+        screen = pygame.display.set_mode((friend_chess.WIDTH + 300, friend_chess.HEIGHT))
+        pygame.display.set_caption("Шахматы (вариант друга)")
+
+        game = friend_chess.ChessGame(screen)
+        game.run()
+        return
     elif mode == "2":
         from checkers_rules import CheckersRules
         from board import SquareBoard, make_start_checkers_board

@@ -1,20 +1,68 @@
+from __future__ import annotations
+
 from board import SquareBoard
 from rules import ClassicChessRules
 from move import Move
-from copy import deepcopy
-
-
-
 
 
 class Game:
+    """Движок партии (board + rules + состояние хода).
+
+    UI (pygame/консоль) работает через единый API:
+      - rules.validate_move / rules.apply_move
+      - Game.push_state() перед ходом
+      - Game.undo() для отката
+
+    Вся логика undo хранится в одном месте (snapshot/restore).
+    """
+
     def __init__(self, board=None, rules=None):
-        self.board = board if board is not None else SquareBoard()   # chess default
+        self.board = board if board is not None else SquareBoard()  # chess default
         self.rules = rules if rules is not None else ClassicChessRules()
+
         self.white_turn = True
         self.move_count = 0
-        self.history = []
+        self.history: list[dict] = []
 
+    # ---------- undo / history ----------
+    def snapshot(self) -> dict:
+        """Снимок состояния партии. Хранит только то, что нужно восстановить."""
+        snap = {
+            "grid": self.board.clone_grid(),
+            "white_turn": self.white_turn,
+            "move_count": self.move_count,
+        }
+
+        # rules state (если есть)
+        if hasattr(self.rules, "moved"):
+            snap["rules_moved"] = dict(getattr(self.rules, "moved"))
+        if hasattr(self.rules, "ep"):
+            ep = getattr(self.rules, "ep")
+            snap["rules_ep"] = None if ep is None else dict(ep)
+
+        return snap
+
+    def restore(self, snap: dict) -> None:
+        self.board.grid = [row[:] for row in snap["grid"]]
+        self.white_turn = snap["white_turn"]
+        self.move_count = snap["move_count"]
+
+        if hasattr(self.rules, "moved") and "rules_moved" in snap:
+            self.rules.moved = dict(snap["rules_moved"])
+        if hasattr(self.rules, "ep") and "rules_ep" in snap:
+            self.rules.ep = snap["rules_ep"]
+
+    def push_state(self) -> None:
+        """UI вызывает это ПЕРЕД применением хода, чтобы работал undo."""
+        self.history.append(self.snapshot())
+
+    def undo(self) -> bool:
+        if not self.history:
+            return False
+        self.restore(self.history.pop())
+        return True
+
+    # ---------- консольный режим (можно не использовать) ----------
     @staticmethod
     def print_legend():
         print("Обозначения фигур:")
@@ -38,23 +86,8 @@ class Game:
         print("  e8 g8  (чёрные короткая)  |  e8 c8 (чёрные длинная)")
         print()
 
-    def snapshot(self):
-        return {
-            "grid": self.board.clone_grid(),
-            "white_turn": self.white_turn,
-            "move_count": self.move_count,
-            "moved": dict(self.rules.moved),
-            "ep": None if self.rules.ep is None else dict(self.rules.ep),
-        }
-
-    def restore(self, snap):
-        self.board.grid = [row[:] for row in snap["grid"]]
-        self.white_turn = snap["white_turn"]
-        self.move_count = snap["move_count"]
-        self.rules.moved = dict(snap["moved"])
-        self.rules.ep = snap["ep"]
-
     def run(self):
+        """Консольный запуск. Для сдачи через pygame можно не использовать."""
         self.print_legend()
         self.print_menu()
 
@@ -64,11 +97,11 @@ class Game:
             print(f"{side} ходят. Сделано полуходов: {self.move_count}")
             print("Подсказка: help | undo [n] | hint e2 | threatened | exit")
 
-            in_chk = self.rules.is_in_check(self.board, self.white_turn)
+            in_chk = hasattr(self.rules, "is_in_check") and self.rules.is_in_check(self.board, self.white_turn)
             if in_chk:
                 print("Внимание: ШАХ!")
 
-            if not self.rules.has_any_legal_move(self.board, self.white_turn):
+            if hasattr(self.rules, "has_any_legal_move") and (not self.rules.has_any_legal_move(self.board, self.white_turn)):
                 if in_chk:
                     print("МАТ! Игра окончена.")
                 else:
@@ -98,11 +131,10 @@ class Game:
                     print("Нечего так много отменять.")
                     continue
                 for _ in range(n):
-                    snap = self.history.pop()
-                    self.restore(snap)
+                    self.undo()
                 continue
 
-            if low.startswith("hint"):
+            if low.startswith("hint") and hasattr(self.rules, "cmd_hint"):
                 parts = low.split()
                 if len(parts) < 2:
                     print("Пример: hint e2")
@@ -110,7 +142,7 @@ class Game:
                 self.rules.cmd_hint(self.board, self.white_turn, parts[1])
                 continue
 
-            if low == "threatened":
+            if low == "threatened" and hasattr(self.rules, "cmd_threatened"):
                 self.rules.cmd_threatened(self.board, self.white_turn)
                 continue
 
@@ -135,39 +167,11 @@ class Game:
                 print("Ошибка:", info)
                 continue
 
-            # undo snapshot ДО хода
-            self.history.append(self.snapshot())
-
+            self.push_state()
             self.rules.apply_move(self.board, mv, self.white_turn, info)
             self.move_count += 1
-            self.white_turn = not self.white_turn
 
-    def push_state(self):
-        snapshot = {
-            "grid": deepcopy(self.board.grid),
-            "white_turn": self.white_turn,
-            "halfmove_count": getattr(self, "halfmove_count", 0),
-            "rules_ep": deepcopy(getattr(self.rules, "ep", None)),
-            "rules_moved": deepcopy(getattr(self.rules, "moved", None)),
-        }
-        self.history.append(snapshot)
-
-    def undo(self):
-        if not self.history:
-            return False
-
-        snap = self.history.pop()
-
-        self.board.grid = snap["grid"]
-        self.white_turn = snap["white_turn"]
-
-        if hasattr(self, "halfmove_count"):
-            self.halfmove_count = snap["halfmove_count"]
-
-        if hasattr(self.rules, "ep"):
-            self.rules.ep = snap["rules_ep"]
-
-        if hasattr(self.rules, "moved"):
-            self.rules.moved = snap["rules_moved"]
-
-        return True
+            if hasattr(self.rules, "forced_piece") and self.rules.forced_piece is not None:
+                print("Продолжай рубку этой же шашкой!")
+            else:
+                self.white_turn = not self.white_turn
