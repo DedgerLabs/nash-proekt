@@ -1,18 +1,12 @@
+# pygame_hex_ui.py  (hex chess playable MVP)
 import math
 import pygame
 
-# ---------------------------
-# Hex math (axial coordinates)
-# ---------------------------
+from hex_board import HexBoard
+from hex_rules import HexChessRulesMcCooey, HexMove
 
 SQRT3 = math.sqrt(3)
 
-def axial_neighbors(q, r):
-    return [
-        (q + 1, r), (q - 1, r),
-        (q, r + 1), (q, r - 1),
-        (q + 1, r - 1), (q - 1, r + 1),
-    ]
 
 def axial_to_pixel(q, r, size, origin):
     ox, oy = origin
@@ -20,16 +14,16 @@ def axial_to_pixel(q, r, size, origin):
     y = size * 1.5 * r + oy
     return (x, y)
 
+
 def hex_corners(cx, cy, size):
-    # pointy-top
     pts = []
     for i in range(6):
-        angle = math.radians(60 * i - 30)
+        angle = math.radians(60 * i - 30)  # pointy-top
         pts.append((cx + size * math.cos(angle), cy + size * math.sin(angle)))
     return pts
 
+
 def point_in_poly(pt, poly):
-    # ray casting
     x, y = pt
     inside = False
     n = len(poly)
@@ -40,71 +34,91 @@ def point_in_poly(pt, poly):
             inside = not inside
     return inside
 
-# ---------------------------
-# Hex board model (radius)
-# ---------------------------
 
-class HexBoard:
-    """
-    Гекс-доска радиуса R (Глинский: обычно R=5 -> 91 клетка).
-    Храним клетки в axial (q,r). Допустимые клетки: |q|<=R, |r|<=R, |q+r|<=R.
-    """
-    def __init__(self, radius=5):
-        self.radius = radius
-        self.cells = {}  # (q,r) -> symbol
-        for q in range(-radius, radius + 1):
-            for r in range(-radius, radius + 1):
-                s = -q - r
-                if max(abs(q), abs(r), abs(s)) <= radius:
-                    self.cells[(q, r)] = "."  # пусто
 
-    def get(self, q, r):
-        return self.cells.get((q, r))
+def make_start_mccooey_official(board: HexBoard):
+    # очистить поле
+    for q, r in board.all_cells():
+        board.set(q, r, ".")
 
-    def set(self, q, r, v):
-        if (q, r) in self.cells:
-            self.cells[(q, r)] = v
+    # --- WHITE (заглавные внизу) ---
+    # 7 пешек
+    for q in [-3, -2, -1, 0, 1, 2, 3]:
+        board.set(q, 3, "P")
 
-    def in_bounds(self, q, r):
-        return (q, r) in self.cells
+    # 3 слона (важно для McCooey/hex) + остальные фигуры
+    # делаем компактно и симметрично, влезает в radius=5
+    placements_white = {
+        (-2, 4): "B",
+        (0, 4): "B",
+        (2, 4): "B",
 
-    def all_cells(self):
-        return list(self.cells.keys())
+        (-3, 4): "R",
+        (3, 4): "R",
 
-# ---------------------------
-# Pygame UI
-# ---------------------------
+        (-1, 4): "N",
+        (1, 4): "N",
+
+        (0, 5): "K",
+        (-1, 5): "Q",
+    }
+    for (q, r), s in placements_white.items():
+        if board.in_bounds(q, r):
+            board.set(q, r, s)
+
+    # --- BLACK (строчные сверху) ---
+    for q in [-3, -2, -1, 0, 1, 2, 3]:
+        board.set(q, -3, "p")
+
+    placements_black = {
+        (-2, -4): "b",
+        (0, -4): "b",
+        (2, -4): "b",
+
+        (-3, -4): "r",
+        (3, -4): "r",
+
+        (-1, -4): "n",
+        (1, -4): "n",
+
+        (0, -5): "k",
+        (1, -5): "q",
+    }
+    for (q, r), s in placements_black.items():
+        if board.in_bounds(q, r):
+            board.set(q, r, s)
+
+
+
 
 def main():
     pygame.init()
 
-
-    # Настройки
-    radius = 5          # Глинский = 5 (91 клетка)
-    HEX_SIZE = 34       # размер клетки (подбери под своё окно)
-    W, H = 900, 800
+    radius = 5
+    HEX_SIZE = 34
+    W, H = 1000, 860
 
     screen = pygame.display.set_mode((W, H))
-    pygame.display.set_caption("Hex Chess board (preview)")
+    pygame.display.set_caption("Hex Chess (McCooey) — MVP")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 24)
+    big = pygame.font.SysFont(None, 30)
 
     board = HexBoard(radius=radius)
-    from hex_board import make_start_hex_test
-    make_start_hex_test(board)
+    make_start_mccooey_official(board)
+    rules = HexChessRulesMcCooey()
 
-    # Центрируем поле
-    origin = (W // 2, H // 2)
+    origin = (W // 2, H // 2 + 20)
 
-    selected = None
-    info = "Кликни по клетке"
-
-    # Предрасчёт полигонов для клика
-    # (q,r) -> poly points
     polys = {}
     for (q, r) in board.all_cells():
         cx, cy = axial_to_pixel(q, r, HEX_SIZE, origin)
         polys[(q, r)] = hex_corners(cx, cy, HEX_SIZE - 1)
+
+    white_turn = True
+    selected = None
+    legal_moves = []
+    info = "ЛКМ: выбрать/ход | ESC: выйти"
 
     running = True
     while running:
@@ -121,42 +135,74 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mx, my = event.pos
                 hit = None
-                # простой перебор (91 клетка — нормально)
                 for cell, poly in polys.items():
                     if point_in_poly((mx, my), poly):
                         hit = cell
                         break
-                if hit:
-                    selected = hit
-                    info = f"Выбрана клетка axial q={hit[0]} r={hit[1]}"
+                if not hit:
+                    continue
 
-        # рисуем
+                q, r = hit
+
+                if selected is None:
+                    sym = board.get(q, r)
+                    if sym == ".":
+                        continue
+                    if not rules.is_own_piece(sym, white_turn):
+                        continue
+                    selected = (q, r)
+                    legal_moves = rules.legal_moves_from(board, q, r, white_turn)
+                else:
+                    q1, r1 = selected
+                    mv = HexMove(q1, r1, q, r)
+                    ok, msg = rules.validate_move(board, mv, white_turn)
+                    if ok:
+                        rules.apply_move(board, mv, white_turn, msg)
+                        white_turn = not white_turn
+                        res = rules.game_result(board, white_turn)
+                        if res == "white":
+                            info = "Победа белых (мат)!"
+                        elif res == "black":
+                            info = "Победа чёрных (мат)!"
+                        elif res == "draw":
+                            info = "Ничья (пат)!"
+                        else:
+                            info = "Ход сделан."
+                    else:
+                        info = f"Ошибка: {msg}"
+
+                    selected = None
+                    legal_moves = []
+
+        # draw
         screen.fill((18, 18, 18))
 
         for (q, r), poly in polys.items():
-            # шахматный “узор” по parity
             color = (200, 200, 200) if ((q + r) & 1) == 0 else (120, 120, 120)
             pygame.draw.polygon(screen, color, poly)
             pygame.draw.polygon(screen, (40, 40, 40), poly, 2)
 
-            # символ (пока пусто)
+            if (q, r) in legal_moves:
+                pygame.draw.polygon(screen, (80, 180, 80), poly, 3)
+
             sym = board.get(q, r)
             if sym != ".":
                 cx, cy = axial_to_pixel(q, r, HEX_SIZE, origin)
-                txt = font.render(sym, True, (0, 0, 0))
+                txt = big.render(sym, True, (0, 0, 0))
                 rect = txt.get_rect(center=(cx, cy))
                 screen.blit(txt, rect)
 
         if selected:
             pygame.draw.polygon(screen, (220, 180, 60), polys[selected], 4)
 
-        # инфо
-        txt = font.render(info + " | ESC выйти", True, (240, 240, 240))
-        screen.blit(txt, (10, 10))
+        side = "WHITE" if white_turn else "BLACK"
+        screen.blit(font.render(f"Turn: {side}", True, (240, 240, 240)), (10, 10))
+        screen.blit(font.render(info, True, (240, 240, 240)), (10, 34))
 
         pygame.display.flip()
 
     pygame.quit()
+
 
 if __name__ == "__main__":
     main()
