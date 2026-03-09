@@ -87,33 +87,50 @@ def knight_moves(board, q: int, r: int, is_white_piece: bool):
     return moves
 
 
+import math
+
 def pawn_moves_mccooey(board, q: int, r: int, is_white_piece: bool, moved_flag: bool):
-    """McCooey pawns (simplified):
+    """McCooey pawns:
     - move 1 forward in the 'forward rook direction'
-    - capture diagonally forward in bishop directions
-    - may move 2 from initial position (except the central pawn; f-file nuance omitted here)
-    Sources: https://greenchess.net/rules.php?v=mccooey
+    - capture diagonally forward in bishop directions (2 squares only)
+    - may move 2 from initial position if not moved (except central pawn q==0)
     """
+
     moves = []
 
-    # Our axial orientation:
     # White goes "up" (r decreases), Black goes "down" (r increases)
     fwd = (0, -1) if is_white_piece else (0, +1)
 
-    # 1 forward
+    # --- forward move ---
     q1, r1 = q + fwd[0], r + fwd[1]
     if board.in_bounds(q1, r1) and board.get(q1, r1) == ".":
         moves.append((q1, r1))
 
-        # 2 forward from start if not moved and path clear
+        # optional double-step from start (your simplified rule)
         q2, r2 = q + 2 * fwd[0], r + 2 * fwd[1]
-        if (not moved_flag) and (q != 0):  # proxy "not central pawn"
+        if (not moved_flag) and (q != 0):
             if board.in_bounds(q2, r2) and board.get(q2, r2) == ".":
                 moves.append((q2, r2))
 
-    # captures: diagonally forward (in bishop directions)
-    cap_dirs = [d for d in BISHOP_DIRS if (d[1] < 0)] if is_white_piece else [d for d in BISHOP_DIRS if (d[1] > 0)]
-    cap_dirs = sorted(cap_dirs, key=lambda x: (-abs(x[1]), abs(x[0])))[:2]
+    # --- captures: 2 "forward" bishop diagonals ---
+    # Pick 2 bishop directions closest to "forward" using cosine similarity.
+    fdx, fdr = fwd
+    scored = []
+
+    for dq, dr in BISHOP_DIRS:
+        # must be forward-ish (for white dr<0, for black dr>0)
+        if is_white_piece and dr >= 0:
+            continue
+        if (not is_white_piece) and dr <= 0:
+            continue
+
+        dot = dq * fdx + dr * fdr
+        norm = math.hypot(dq, dr) * math.hypot(fdx, fdr)
+        score = dot / norm if norm else -999
+        scored.append(((dq, dr), score))
+
+    scored.sort(key=lambda x: x[1], reverse=True)
+    cap_dirs = [d for (d, _) in scored[:2]]
 
     for dq, dr in cap_dirs:
         qx, rx = q + dq, r + dr

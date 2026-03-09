@@ -5,9 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f76e753b-bb7d-4a6d-b8e6-2d903b584d37" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/checkers_rules.py" beforeDir="false" afterPath="$PROJECT_DIR$/checkers_rules.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/game.py" beforeDir="false" afterPath="$PROJECT_DIR$/game.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pygame_main.py" beforeDir="false" afterPath="$PROJECT_DIR$/pygame_main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hex_chess_2p.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hex_chess_3p.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hex_chess_rules.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hex_rules.py" beforeDir="false" afterPath="$PROJECT_DIR$/hex_rules.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pygame_hex_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/pygame_hex_ui.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +59,7 @@
       <recent name="C:\Users\Ignat\Documents\универ\тер вер" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.pygame_main">
+  <component name="RunManager" selected="Python.main">
     <configuration name="1" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="chess_oop" />
       <option name="ENV_FILES" value="" />
@@ -146,9 +150,9 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.pygame_main" />
-        <item itemvalue="Python.pygame_hex_ui" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.pygame_hex_ui" />
+        <item itemvalue="Python.pygame_main" />
         <item itemvalue="Python.1" />
       </list>
     </recent_temporary>

@@ -3,22 +3,37 @@ import math
 import pygame
 
 from hex_board import HexBoard
-from hex_rules import HexChessRulesMcCooey, HexMove
+from hex_chess_rules import HexChessRulesMcCooey, HexMove
 
 SQRT3 = math.sqrt(3)
 
 
+def rotate_point(x, y, ox, oy, angle_rad):
+    dx, dy = x - ox, y - oy
+    ca, sa = math.cos(angle_rad), math.sin(angle_rad)
+    rx = dx * ca - dy * sa
+    ry = dx * sa + dy * ca
+    return ox + rx, oy + ry
+
+
 def axial_to_pixel(q, r, size, origin):
+    """pointy-top axial -> pixel (+ optional rotation)"""
     ox, oy = origin
     x = size * SQRT3 * (q + r / 2) + ox
     y = size * 1.5 * r + oy
-    return (x, y)
+
+    # ПОВОРОТ ДОСКИ (если хочешь)
+    angle = math.radians(30)  # можно 0 / 30 / 60 / 90
+    x, y = rotate_point(x, y, ox, oy, angle)
+
+    return x, y
 
 
 def hex_corners(cx, cy, size):
+    """corners for pointy-top hex (match axial_to_pixel)"""
     pts = []
     for i in range(6):
-        angle = math.radians(60 * i - 30)  # pointy-top
+        angle = math.radians(60 * i - 30)  # <-- ВАЖНО: -30 для pointy-top
         pts.append((cx + size * math.cos(angle), cy + size * math.sin(angle)))
     return pts
 
@@ -35,60 +50,28 @@ def point_in_poly(pt, poly):
     return inside
 
 
-
-def make_start_mccooey_official(board: HexBoard):
-    # очистить поле
+def make_start_mccooey_wiki(board: HexBoard):
     for q, r in board.all_cells():
         board.set(q, r, ".")
 
-    # --- WHITE (заглавные внизу) ---
-    # 7 пешек
-    for q in [-3, -2, -1, 0, 1, 2, 3]:
-        board.set(q, 3, "P")
-
-    # 3 слона (важно для McCooey/hex) + остальные фигуры
-    # делаем компактно и симметрично, влезает в radius=5
-    placements_white = {
-        (-2, 4): "B",
-        (0, 4): "B",
-        (2, 4): "B",
-
-        (-3, 4): "R",
-        (3, 4): "R",
-
-        (-1, 4): "N",
-        (1, 4): "N",
-
-        (0, 5): "K",
-        (-1, 5): "Q",
+    white_pieces = {
+        (-3, 4): 'P', (-2, 3): 'P', (-1, 3): 'P', (0, 3): 'P',
+        (1, 2):  'P', (2, 2):  'P', (3, 1):  'P',
+        (-4, 5): 'R', (-3, 5): 'N', (-2, 5): 'B',
+        (-1, 5): 'Q', (0, 5):  'B', (1, 4):  'K',
+        (2, 3):  'N', (3, 2):  'R',
+        (0, 4):  'B',
     }
-    for (q, r), s in placements_white.items():
+
+    for (q, r), sym in white_pieces.items():
         if board.in_bounds(q, r):
-            board.set(q, r, s)
+            board.set(q, r, sym)
 
-    # --- BLACK (строчные сверху) ---
-    for q in [-3, -2, -1, 0, 1, 2, 3]:
-        board.set(q, -3, "p")
-
-    placements_black = {
-        (-2, -4): "b",
-        (0, -4): "b",
-        (2, -4): "b",
-
-        (-3, -4): "r",
-        (3, -4): "r",
-
-        (-1, -4): "n",
-        (1, -4): "n",
-
-        (0, -5): "k",
-        (1, -5): "q",
-    }
-    for (q, r), s in placements_black.items():
-        if board.in_bounds(q, r):
-            board.set(q, r, s)
-
-
+    # Чёрные — точное зеркало через центр доски
+    for (q, r), sym in white_pieces.items():
+        qb, rb = -q, -r
+        if board.in_bounds(qb, rb):
+            board.set(qb, rb, sym.lower())
 
 
 def main():
@@ -105,7 +88,8 @@ def main():
     big = pygame.font.SysFont(None, 30)
 
     board = HexBoard(radius=radius)
-    make_start_mccooey_official(board)
+    make_start_mccooey_wiki(board)
+
     rules = HexChessRulesMcCooey()
 
     origin = (W // 2, H // 2 + 20)
@@ -178,7 +162,15 @@ def main():
         screen.fill((18, 18, 18))
 
         for (q, r), poly in polys.items():
-            color = (200, 200, 200) if ((q + r) & 1) == 0 else (120, 120, 120)
+            # 3-цветная раскраска (как в hex chess)
+            k = (q - r) % 3
+            if k == 0:
+                color = (210, 200, 170)
+            elif k == 1:
+                color = (170, 150, 110)
+            else:
+                color = (120, 120, 120)
+
             pygame.draw.polygon(screen, color, poly)
             pygame.draw.polygon(screen, (40, 40, 40), poly, 2)
 
