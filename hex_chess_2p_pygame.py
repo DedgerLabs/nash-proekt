@@ -5,18 +5,27 @@ import math
 class Board:
     def __init__(self):
         pygame.init()
-        self.WIDTH, self.HEIGHT = 800, 600
-        self.SIDE = 30
-        self.BACKGROUND = (30, 30, 30)
-        self.COLORS = [(80, 80, 80), (34, 139, 34), (245, 245, 220)]
-        self.LINE_COLOR = (0, 0, 0)
-        self.PLAYER_COLORS = {'white': (255, 255, 255), 'black': (0, 0, 0)}
-        
+        self.WIDTH, self.HEIGHT = 1200, 900
+        self.SIDE = 36
+
+        self.BACKGROUND = (24, 28, 36)
+        self.COLORS = [
+            (238, 220, 190),
+            (188, 154, 122),
+            (132, 104, 77)
+        ]
+        self.LINE_COLOR = (45, 45, 50)
+
+        self.PLAYER_COLORS = {
+            'white': (245, 245, 245),
+            'black': (35, 35, 35)
+        }
+
         self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
-        pygame.display.set_caption("Гексагональные шахматы")
+        pygame.display.set_caption("Hex Chess — 2 Players")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.Font(None, 36)
-        self.small_font = pygame.font.Font(None, 24)
+        self.font = pygame.font.Font(None, 40)
+        self.small_font = pygame.font.Font(None, 28)
         
         self.SQRT3 = math.sqrt(3)
         self.ANGLES = [i * math.pi / 3 for i in range(6)]
@@ -90,20 +99,34 @@ class Board:
     def draw_piece(self, surface, piece):
         cx, cy = self.cube_to_pixel(piece.x, piece.y, piece.z)
         color = self.PLAYER_COLORS[piece.color]
-        radius = int(self.SIDE * 0.4)
+        radius = int(self.SIDE * 0.42)
+
         pygame.draw.circle(surface, color, (cx, cy), radius)
-        pygame.draw.circle(surface, self.LINE_COLOR, (cx, cy), radius, 2)
-        font = pygame.font.Font(None, int(radius * 1.5))
-        text_color = (255, 255, 255) if piece.color == 'black' else self.LINE_COLOR
+        pygame.draw.circle(surface, (20, 20, 20), (cx, cy), radius, 3)
+
+        font = pygame.font.Font(None, int(radius * 1.6))
+        text_color = (250, 250, 250) if piece.color == 'black' else (15, 15, 15)
         text = font.render(piece.symbol, True, text_color)
         text_rect = text.get_rect(center=(cx, cy))
         surface.blit(text, text_rect)
 
-    def draw_highlight(self, surface, x, y, z, color=(255, 255, 0, 80)):
+    def draw_highlight(self, surface, x, y, z, color=(80, 170, 255, 110)):
         cx, cy = self.cube_to_pixel(x, y, z)
-        s = pygame.Surface((self.SIDE*2, self.SIDE*2), pygame.SRCALPHA)
-        pygame.draw.circle(s, color[:3] + (80,), (self.SIDE, self.SIDE), int(self.SIDE*0.3))
+        s = pygame.Surface((self.SIDE * 2, self.SIDE * 2), pygame.SRCALPHA)
+        pygame.draw.circle(s, color, (self.SIDE, self.SIDE), int(self.SIDE * 0.32))
         surface.blit(s, (cx - self.SIDE, cy - self.SIDE))
+
+    def draw_status_panel(self, current_turn, status_text=""):
+        panel_rect = pygame.Rect(0, 0, self.WIDTH, 70)
+        pygame.draw.rect(self.screen, (18, 21, 28), panel_rect)
+
+        turn_label = "Белые" if current_turn == "white" else "Чёрные"
+        title = self.font.render(f"Ход: {turn_label}", True, (245, 245, 245))
+        self.screen.blit(title, (20, 15))
+
+        if status_text:
+            msg = self.small_font.render(status_text, True, (210, 210, 210))
+            self.screen.blit(msg, (20, 42))
 
     def draw_text(self, text, y_offset=0, color=(255,255,255)):
         text_surf = self.font.render(text, True, color)
@@ -385,18 +408,25 @@ def main():
 
     selected_piece = None
     possible_moves = []
-    turn = 'white'
-
+    turn = "white"
     running = True
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not board.game_over:
+
+            elif (
+                event.type == pygame.MOUSEBUTTONDOWN
+                and event.button == 1
+                and not board.game_over
+            ):
                 mx, my = pygame.mouse.get_pos()
                 hex_coord = board.get_hex_at(mx, my)
+
                 if hex_coord is None:
                     selected_piece = None
                     possible_moves = []
@@ -405,55 +435,81 @@ def main():
                 hx, hy, hz = hex_coord
                 piece_here = board.get_piece_at(hx, hy, hz)
 
-                if selected_piece and (hx, hy, hz) in possible_moves:
-                    # Совершаем ход
-                    if piece_here:
+                # если кликнули по доступному ходу — делаем ход
+                if selected_piece is not None and (hx, hy, hz) in possible_moves:
+                    if piece_here is not None:
                         board.pieces.remove(piece_here)
-                    selected_piece.x, selected_piece.y, selected_piece.z = hx, hy, hz
+
+                    selected_piece.x = hx
+                    selected_piece.y = hy
+                    selected_piece.z = hz
+
                     if isinstance(selected_piece, Pawn):
                         selected_piece.has_moved = True
+
                     selected_piece = None
                     possible_moves = []
-                    
-                    # Меняем сторону
-                    turn = 'black' if turn == 'white' else 'white'
-                    
-                    # Проверяем состояние игры
+
+                    # меняем сторону
+                    turn = "black" if turn == "white" else "white"
+
+                    # проверяем окончание игры
                     if board.is_in_check(turn):
                         if not board.has_any_legal_moves(turn):
                             board.game_over = True
-                            board.winner = 'white' if turn == 'black' else 'black'
+                            board.winner = "white" if turn == "black" else "black"
                     else:
                         if not board.has_any_legal_moves(turn):
                             board.game_over = True
-                            board.winner = None  # Пат
+                            board.winner = None  # пат
+
                 else:
-                    if piece_here and piece_here.color == turn:
+                    # выбор фигуры
+                    if piece_here is not None and piece_here.color == turn:
                         selected_piece = piece_here
-                        possible_moves = board.get_legal_moves(piece_here)  # только легальные ходы
+                        possible_moves = board.get_legal_moves(piece_here)
                     else:
                         selected_piece = None
                         possible_moves = []
 
+        # ---------- ОТРИСОВКА ----------
         board.screen.fill(board.BACKGROUND)
 
-        # Отрисовка шестиугольников
+        # доска
         for x, y, z in board.hexes:
             color_index = (x + 2 * y) % 3
             board.draw_hex(board.screen, x, y, z, board.COLORS[color_index])
 
-        # Подсветка возможных ходов
-        for (mx, my, mz) in possible_moves:
-            board.draw_highlight(board.screen, mx, my, mz, (0, 0, 0))
+        # подсветка выбранной фигуры
+        if selected_piece is not None:
+            board.draw_highlight(
+                board.screen,
+                selected_piece.x,
+                selected_piece.y,
+                selected_piece.z,
+                (255, 196, 0, 120)
+            )
 
-        # Отрисовка фигур
-        for piece in pieces:
+        # подсветка возможных ходов
+        for mx, my, mz in possible_moves:
+            board.draw_highlight(
+                board.screen,
+                mx,
+                my,
+                mz,
+                (80, 170, 255, 110)
+            )
+
+        # фигуры
+        for piece in board.pieces:
             board.draw_piece(board.screen, piece)
 
-        # Информация о текущем ходе и статусе игры
+        # статус игры
         if board.game_over:
             if board.winner:
-                board.draw_text(f"Мат! Победили {'Белые' if board.winner == 'white' else 'Чёрные'}")
+                board.draw_text(
+                    f"Мат! Победили {'Белые' if board.winner == 'white' else 'Чёрные'}"
+                )
             else:
                 board.draw_text("Пат! Ничья")
         else:
@@ -464,7 +520,7 @@ def main():
             else:
                 board.draw_text(turn_text)
 
-        pygame.display.set_caption("Гексагональные шахматы")
+        pygame.display.set_caption("Hex Chess — 2 Players")
         pygame.display.flip()
         board.clock.tick(60)
 
