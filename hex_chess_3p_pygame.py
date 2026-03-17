@@ -70,7 +70,7 @@ class Pawn(Piece):
 
         return moves
 
-
+#конь
 class Knight(Piece):
     def __init__(self, color, x, y, z):
         super().__init__(color, x, y, z, "N")
@@ -91,7 +91,7 @@ class Knight(Piece):
 
         return moves
 
-
+#слон
 class Bishop(Piece):
     def __init__(self, color, x, y, z):
         super().__init__(color, x, y, z, "B")
@@ -121,7 +121,7 @@ class Bishop(Piece):
 
         return moves
 
-
+#ладья
 class Rook(Piece):
     def __init__(self, color, x, y, z):
         super().__init__(color, x, y, z, "R")

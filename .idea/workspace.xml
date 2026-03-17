@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="f76e753b-bb7d-4a6d-b8e6-2d903b584d37" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hex_chess_2p_pygame.py" beforeDir="false" afterPath="$PROJECT_DIR$/hex_chess_2p_pygame.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hex_chess_3p_pygame.py" beforeDir="false" afterPath="$PROJECT_DIR$/hex_chess_3p_pygame.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
